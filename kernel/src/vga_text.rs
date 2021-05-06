@@ -94,6 +94,7 @@ impl Writer {
 
     fn new_line( &mut self) {
         self.line_position += 1;
+        self.column_position = 0;
         
         if self.line_position >= BUFFER_HEIGHT {
             self.scroll_up();
@@ -138,9 +139,9 @@ impl Writer {
         for byte in text.bytes() {
             match byte {
                 // druckbare Zeichen
-                0x20..=0x7e | b'\n' => self.write_char(byte as char),
+                0x20..=0x7e | b'\n' | b'\t' => self.write_char(byte as char),
                 // außerhalb der druckbaren Zeichen
-                _ => self.write_char( '■' ),
+                _ => self.write_char(  0xfe as char ),
             }
 
         }
@@ -151,12 +152,14 @@ pub fn test_print () {
     let mut writer = Writer{
         column_position: 0,
         line_position: 0,
-        color_code: ColorCode::new( Color::LightGreen, Color::DarkGray),
+        color_code: ColorCode::new( Color::Black, Color::White),
         buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
 
     };
 
 
     writer.clear();
-    writer.print_string ("Hallo von der kernel!");
+    writer.print_string ("Hallo von der kernel!\n");
+    writer.print_string ("\tim ersten Tab\n");
+    writer.print_string ("1\tim ersten Tab\n");
 }
