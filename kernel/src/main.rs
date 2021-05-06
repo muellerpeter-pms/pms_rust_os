@@ -10,6 +10,7 @@
 mod vga_text;
 #[cfg(test)]
 mod testing;
+mod x86_64;
 
 use bootloader::BootInfo;
 use core::panic::PanicInfo;
