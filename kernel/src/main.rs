@@ -3,6 +3,7 @@
 #![feature(asm)]
 
 mod vga_text;
+mod x86_64;
 
 use bootloader::BootInfo;
 use core::panic::PanicInfo;
