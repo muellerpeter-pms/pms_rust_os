@@ -1,27 +1,20 @@
 #![no_std]
 #![no_main]
-
-
 #![feature(asm)]
-use core::panic::PanicInfo;
-use bootloader::BootInfo;
 
-static HELLO : &[u8] = b"Hallo Welt\n";
+mod vga_text;
+
+use bootloader::BootInfo;
+use core::panic::PanicInfo;
 
 #[no_mangle]
-pub extern "C" fn _start( _boot_info : &BootInfo) -> ! { 
-    
-    let vga_buffer = 0xb8000 as *mut u8;
-
-    for (i, &byte) in HELLO.iter().enumerate() {
-        unsafe {
-            *vga_buffer.offset(i as isize * 2) = byte;
-            *vga_buffer.offset(i as isize * 2 + 1) = 0xb;
-        }
-    }
+pub extern "C" fn _start(_boot_info: &BootInfo) -> ! {
+    vga_text::test_print();
 
     loop {
-        unsafe {asm!("hlt"); }
+        unsafe {
+            asm!("hlt");
+        }
     }
 }
 
