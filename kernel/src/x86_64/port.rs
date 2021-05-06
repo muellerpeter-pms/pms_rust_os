@@ -45,7 +45,7 @@ impl Port {
     pub fn read_u8 ( &self) -> u8 {
         let mut data:u8;
         unsafe {
-        asm!("in dx, al", 
+        asm!("in al, dx", 
                 in("dx") self.address,
                 out("al") data);
         }
@@ -56,7 +56,7 @@ impl Port {
     pub fn read_u16 ( &self) -> u16 {
         let mut data:u16;
         unsafe {
-        asm!("in dx, ax", 
+        asm!("in ax, dx", 
              in("dx") self.address,
              out("ax") data);
         }
@@ -67,7 +67,7 @@ impl Port {
     pub fn read ( &self ) -> u32 {
         let mut data:u32;
         unsafe {
-        asm!("in dx, eax", 
+        asm!("in eax, dx", 
              in("dx") self.address,
              out("eax") data);
         }
