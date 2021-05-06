@@ -2,6 +2,7 @@
 const TEST_EXIT_DEVICE_PORT : u16 = 0xf4;
 
 use crate::{print, println};
+use super::x86_64::Port;
 
 /// das Resultat der Tests
 #[derive(Debug)]
@@ -15,12 +16,9 @@ pub enum TestResult {
 pub fn test_exit_qemu( result : TestResult) -> ! {
     println!();
     println! ("Verlasse Qemu mit dem Resultat: {:?}", result);
-    unsafe{        
-        asm!("out dx, eax",        
-        in("dx") TEST_EXIT_DEVICE_PORT,
-        in("eax") result as u32,
-        );
-    }    
+    
+    let exit_device = Port::new ( TEST_EXIT_DEVICE_PORT );
+    exit_device.write( result as u32);
 
     println! ("Noch da? da ging was schief!"); // keine Panic, sonst sind wir in der Endlosschleife
     loop{unsafe{ asm!("hlt"); } }
@@ -32,7 +30,7 @@ pub fn test_runner(tests: &[&dyn Testable]) {
     for test in tests {
         test.run();
     }
-    loop {}
+
     test_exit_qemu( TestResult::Success );
 }
 
