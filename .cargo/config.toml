@@ -1,6 +1,7 @@
 
-
-
+# nutze bootimage um unser Programm zu starten 
+[target.'cfg(target_os = "none")']
+runner = "bootimage runner"
 
 [build]
     target ="x86_64-rust_os.json"
