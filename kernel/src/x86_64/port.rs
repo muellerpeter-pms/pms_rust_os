@@ -7,7 +7,7 @@ pub struct Port {
 
 impl Port {
     /// Erzeugt einen neuen Port für die angegebene Adresse
-    pub fn new( address : u16)
+    pub fn new( address : u16) -> Port
     {
         Port {
             address
@@ -31,5 +31,6 @@ impl Port {
              in("dx") self.address,
              out("eax") data);
         }
+        data 
     } 
 }
