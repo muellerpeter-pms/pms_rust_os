@@ -1,7 +1,10 @@
 //! Enthält Funktionen für das Drucken von Zeichen auf dem Bildschirm
-//! 
+//!
 //! Die Ausführung orientiert sich an den Informationen von [wiki.osdev.org](https://wiki.osdev.org/Printing_to_Screen)
 
+
+use volatile::Volatile;
+use core::fmt;
 
 /// Farben für den VGA-Modus
 #[allow(dead_code)]
@@ -31,7 +34,6 @@ pub enum Color {
 #[repr(transparent)]
 struct ColorCode(u8);
 
-
 impl ColorCode {
     fn new(foreground: Color, background: Color) -> ColorCode {
         ColorCode((background as u8) << 4 | (foreground as u8))
@@ -55,7 +57,7 @@ const BUFFER_WIDTH: usize = 80;
 /// Der VGA-Puffer als solcher
 #[repr(transparent)]
 struct Buffer {
-    chars: [[ScreenChar; BUFFER_WIDTH]; BUFFER_HEIGHT],
+    chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
 }
 
 /// Eine Struktur zum Darstellen von Zeichen auf dem Bildschirm
@@ -67,99 +69,108 @@ pub struct Writer {
 }
 
 impl Writer {
-
-    fn write_char (&mut self, c : char) {
-        const tab_width : usize = 4;
+    fn write_char(&mut self, c: char) {
+        const TAB_WIDTH: usize = 4;
         match c {
-            '\n' => self.new_line(),   // neue Zeile 
-            '\t' => {                  // Tab
-                let tab_pos = self.column_position % tab_width; // Position im tab berechnen
-                self.column_position+= tab_width - tab_pos; // Vorrücken zum nächsten tab
-            }, 
+            '\n' => self.new_line(), // neue Zeile
+            '\t' => {
+                // Tab
+                let tab_pos = self.column_position % TAB_WIDTH; // Position im tab berechnen
+                self.column_position += TAB_WIDTH - tab_pos; // Vorrücken zum nächsten tab
+            }
             c => {
-                if self.column_position >= BUFFER_WIDTH { // Neue Zeile bei Bedarf
+                if self.column_position >= BUFFER_WIDTH {
+                    // Neue Zeile bei Bedarf
                     self.new_line();
                 }
-                
-                self.buffer.chars [self.line_position][ self.column_position] =
-                    ScreenChar {
-                        ascii_character : c as u8,
-                        color_code : self.color_code,
-                    };
-                
+
+                self.buffer.chars[self.line_position][self.column_position].write(ScreenChar {
+                    ascii_character: c as u8,
+                    color_code: self.color_code,
+                });
+
                 self.column_position += 1;
             }
         }
     }
 
-    fn new_line( &mut self) {
+    fn new_line(&mut self) {
         self.line_position += 1;
         self.column_position = 0;
-        
+
         if self.line_position >= BUFFER_HEIGHT {
             self.scroll_up();
         }
     }
 
-    fn scroll_up( &mut self) {
-        // Alle Zeilen nach oben rücken 
-        for y in 1.. BUFFER_HEIGHT {
+    fn scroll_up(&mut self) {
+        // Alle Zeilen nach oben rücken
+        for y in 1..BUFFER_HEIGHT {
             for x in 0..BUFFER_WIDTH {
-                self.buffer.chars [y-1][x] = self.buffer.chars[y][x];
+                self.buffer.chars[y - 1][x].write(self.buffer.chars[y][x].read());
             }
         }
 
         // letzte Zeile leeren
         let empty = ScreenChar {
-            ascii_character : b' ',
+            ascii_character: b' ',
             color_code: self.color_code,
         };
         for x in 0..BUFFER_WIDTH {
-            self.buffer.chars [BUFFER_HEIGHT-1][x] = empty;
+            self.buffer.chars[BUFFER_HEIGHT - 1][x].write(empty);
         }
 
         self.line_position = BUFFER_HEIGHT - 1;
     }
 
-    pub fn clear( &mut self) {
+    pub fn clear(&mut self) {
         let empty = ScreenChar {
-            ascii_character : b' ',
+            ascii_character: b' ',
             color_code: self.color_code,
         };
-        for y in 0.. BUFFER_HEIGHT {
+        for y in 0..BUFFER_HEIGHT {
             for x in 0..BUFFER_WIDTH {
-                self.buffer.chars [y][x] = empty;
+                self.buffer.chars[y][x].write(empty);
             }
         }
         self.line_position = 0;
         self.column_position = 0;
     }
 
-    pub fn print_string( &mut self, text : &str) {
+    pub fn print_string(&mut self, text: &str) {
         for byte in text.bytes() {
             match byte {
                 // druckbare Zeichen
                 0x20..=0x7e | b'\n' | b'\t' => self.write_char(byte as char),
                 // außerhalb der druckbaren Zeichen
-                _ => self.write_char(  0xfe as char ),
+                _ => self.write_char(0xfe as char),
             }
-
         }
     }
 }
 
-pub fn test_print () {
-    let mut writer = Writer{
+// Damit können wir auf die implementierten Makros zurück greifen 
+impl fmt::Write for Writer {
+    fn write_str(&mut self, text: &str) -> fmt::Result
+    { 
+        self.print_string(text);
+        Ok(())    
+    }
+}
+
+pub fn test_print() {
+    use core::fmt::Write;
+    let mut writer = Writer {
         column_position: 0,
         line_position: 0,
-        color_code: ColorCode::new( Color::Black, Color::White),
+        color_code: ColorCode::new(Color::Black, Color::White),
         buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
-
     };
 
-
     writer.clear();
-    writer.print_string ("Hallo von der kernel!\n");
-    writer.print_string ("\tim ersten Tab\n");
-    writer.print_string ("1\tim ersten Tab\n");
+
+    // erster test mit den Makros
+    write!(writer, "Hallo von der kernel!\n");
+    write!(writer, "\tim ersten Tab\n");
+    write!(writer, "1\tim ersten Tab\n");
 }

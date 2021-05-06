@@ -1,23 +1,20 @@
 #![no_std]
 #![no_main]
-
 #![feature(asm)]
 
 mod vga_text;
 
-use core::panic::PanicInfo;
 use bootloader::BootInfo;
-
-
-static HELLO : &[u8] = b"Hallo Welt\n";
+use core::panic::PanicInfo;
 
 #[no_mangle]
-pub extern "C" fn _start( _boot_info : &BootInfo) -> ! { 
-    
+pub extern "C" fn _start(_boot_info: &BootInfo) -> ! {
     vga_text::test_print();
 
     loop {
-        unsafe {asm!("hlt"); }
+        unsafe {
+            asm!("hlt");
+        }
     }
 }
 
