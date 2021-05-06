@@ -1,7 +1,7 @@
 
 const TEST_EXIT_DEVICE_PORT : u16 = 0xf4;
 
-use crate::println;
+use crate::{print, println};
 
 /// das Resultat der Tests
 #[derive(Debug)]
@@ -32,6 +32,19 @@ pub fn test_runner(tests: &[&dyn Testable]) {
     for test in tests {
         test.run();
     }
+    loop {}
     test_exit_qemu( TestResult::Success );
 }
 
+pub trait Testable {
+    fn run(&self);
+}
+
+impl<T> Testable for T where T: Fn() {
+    fn run (&self) 
+    {
+        print!( "{}...\t", core::any::type_name::<T>() );
+        self();
+        println!( "[ok]");
+    }
+}
