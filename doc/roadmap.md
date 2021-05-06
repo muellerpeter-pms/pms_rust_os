@@ -9,7 +9,7 @@
     
 ## Was sie als nächstes können soll.
 
-- Ermöglichen von Tests für die Kernel
+- Ermöglichen von [Tests](tests.md) für die Kernel
 - Excepetions
     - CPU Ausnahmen
     - interrupts
