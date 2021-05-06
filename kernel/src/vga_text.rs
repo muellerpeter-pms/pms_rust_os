@@ -2,9 +2,10 @@
 //!
 //! Die Ausführung orientiert sich an den Informationen von [wiki.osdev.org](https://wiki.osdev.org/Printing_to_Screen)
 
-
-use volatile::Volatile;
 use core::fmt;
+use lazy_static::lazy_static;
+use spin::Mutex;
+use volatile::Volatile;
 
 /// Farben für den VGA-Modus
 #[allow(dead_code)]
@@ -149,28 +150,49 @@ impl Writer {
     }
 }
 
-// Damit können wir auf die implementierten Makros zurück greifen 
+// Damit können wir auf die implementierten Makros zurück greifen
 impl fmt::Write for Writer {
-    fn write_str(&mut self, text: &str) -> fmt::Result
-    { 
+    fn write_str(&mut self, text: &str) -> fmt::Result {
         self.print_string(text);
-        Ok(())    
+        Ok(())
     }
 }
 
-pub fn test_print() {
-    use core::fmt::Write;
-    let mut writer = Writer {
+lazy_static! {
+    pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
         column_position: 0,
         line_position: 0,
         color_code: ColorCode::new(Color::Black, Color::White),
         buffer: unsafe { &mut *(0xb8000 as *mut Buffer) },
-    };
+    });
+}
 
-    writer.clear();
+
+#[macro_export]
+macro_rules! print {
+    ($($arg:tt)*) => ($crate::vga_text::_print(format_args!($($arg)*)));
+}
+
+#[macro_export]
+macro_rules! println {
+    () => ($crate::print!("\n"));
+    ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
+}
+
+#[doc(hidden)]
+pub fn _print(args: fmt::Arguments) {
+    use core::fmt::Write;
+    WRITER.lock().write_fmt(args).unwrap();
+}
+
+
+pub fn test_print() {
+    use core::fmt::Write;
+
+    WRITER.lock().clear();
 
     // erster test mit den Makros
-    write!(writer, "Hallo von der kernel!\n");
-    write!(writer, "\tim ersten Tab\n");
-    write!(writer, "1\tim ersten Tab\n");
+    println!("Hallo von der kernel!");
+    println!("\tim ersten Tab");
+    println!("1\tim ersten Tab");
 }
