@@ -2,6 +2,7 @@
 const TEST_EXIT_DEVICE_PORT : u16 = 0xf4;
 
 use crate::{print, println};
+use crate::{print_serial, println_serial};
 use super::x86_64::Port;
 
 /// das Resultat der Tests
@@ -26,7 +27,7 @@ pub fn test_exit_qemu( result : TestResult) -> ! {
 
 /// Durchläuft die übergebenen Tests, danach beendet es qemu durch 'test_exit_qemu' mit TestResult::Success
 pub fn test_runner(tests: &[&dyn Testable]) {
-    println!("Starte {} tests", tests.len());
+    println_serial!("Starte {} tests", tests.len());
     for test in tests {
         test.run();
     }
@@ -41,8 +42,8 @@ pub trait Testable {
 impl<T> Testable for T where T: Fn() {
     fn run (&self) 
     {
-        print!( "{}...\t", core::any::type_name::<T>() );
+        print_serial!( "{}...\t", core::any::type_name::<T>() );
         self();
-        println!( "[ok]");
+        println_serial!( "[ok]");
     }
 }
