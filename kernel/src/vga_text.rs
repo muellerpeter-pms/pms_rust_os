@@ -184,15 +184,3 @@ pub fn _print(args: fmt::Arguments) {
     use core::fmt::Write;
     WRITER.lock().write_fmt(args).unwrap();
 }
-
-
-pub fn test_print() {
-    use core::fmt::Write;
-
-    WRITER.lock().clear();
-
-    // erster test mit den Makros
-    println!("Hallo von der kernel!");
-    println!("\tim ersten Tab");
-    println!("1\tim ersten Tab");
-}

@@ -9,7 +9,15 @@ use core::panic::PanicInfo;
 
 #[no_mangle]
 pub extern "C" fn _start(_boot_info: &BootInfo) -> ! {
-    vga_text::test_print();
+
+    // Bildschirm leeren und Hintergrundfarbe setzen
+    vga_text::WRITER.lock().clear();
+
+    // Ein kurzes Hallo
+    println!("Rust OS");
+    println!("Version {}", env!("CARGO_PKG_VERSION"));
+
+    panic!("test!");
 
     loop {
         unsafe {
@@ -19,6 +27,7 @@ pub extern "C" fn _start(_boot_info: &BootInfo) -> ! {
 }
 
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
+fn panic(info: &PanicInfo) -> ! {
+    println!("{}", info);
     loop {}
 }
