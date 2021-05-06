@@ -28,6 +28,8 @@ pub extern "C" fn _start(_boot_info: &BootInfo) -> ! {
     println!("Rust OS");
     println!("Version {}", env!("CARGO_PKG_VERSION"));
 
+    panic!("test!");
+
     loop {
         unsafe {
             asm!("hlt");
@@ -37,6 +39,9 @@ pub extern "C" fn _start(_boot_info: &BootInfo) -> ! {
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
+    #[cfg(test)]
+    println_serial!("{}", info);
+    #[cfg(not(test))]
     println!("{}", info);
     
     #[cfg(test)]
