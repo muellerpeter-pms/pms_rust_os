@@ -4,12 +4,12 @@
 
 #![feature(asm)]
 use core::panic::PanicInfo;
+use bootloader::BootInfo;
 
 static HELLO : &[u8] = b"Hallo Welt\n";
 
-
 #[no_mangle]
-pub extern "C" fn _start() -> ! { 
+pub extern "C" fn _start( _boot_info : &BootInfo) -> ! { 
     
     let vga_buffer = 0xb8000 as *mut u8;
 
