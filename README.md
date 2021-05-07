@@ -1,5 +1,8 @@
 # Peter Müller Software - Rust Operating System
 
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/muellerpeter-pms/pms_rust_os/Rust)
+![GitHub last commit](https://img.shields.io/github/last-commit/muellerpeter-pms/pms_rust_os)
+
 ## Beschreibung
 
 Nach einigen Überlegungen möchte ich das gesamte Projekt in deutscher Sprache durchführen. In Englisch gibt es bereits viele Tutorials und Quellen. Obwohl ich auch versucht war, meine eigenen Erkenntnisse in Englisch zu verfassen, kann ich gerade komplexe Sachverhalte in meiner Muttersprache sehr viel besser ausdrücken.
