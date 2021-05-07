@@ -2,10 +2,11 @@ name: Rust
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, dev ]    
   pull_request:
-    branches: [ main ]
+    branches: [ main, dev ]
   workflow_dispatch:
+
 
 env:
   CARGO_TERM_COLOR: always
@@ -17,12 +18,24 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+  
+    - name: apt-install qemu
+      run: sudo apt install qemu qemu-system-x86   
 
+    - name: check qemu version
+      run: qemu-system-x86_64 --version
+
+    - name: Get rust sources
+      run: rustup component add rust-src
+      
+    - name: Get rust llvm-tools-preview
+      run: rustup component add llvm-tools-preview
+
+    - name: Get Bootimage for cargo
+      run: cargo install bootimage
+      
     - name: Build
       run: cargo build --verbose
-
-    - name: Docker Setup QEMU
-      uses: docker/setup-qemu-action@v1.1.0
-
+          
     - name: Run tests
       run: cargo test --verbose
