@@ -15,6 +15,8 @@ use core::panic::PanicInfo;
 pub fn init() {
     gdt::init();
     interrupt::init_idt();
+    unsafe { interrupt::PICS.lock().initialize() }
+    x86_64::instructions::interrupts::enable();
 }
 
 pub trait Testable {
