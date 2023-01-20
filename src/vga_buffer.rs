@@ -1,5 +1,5 @@
 use volatile::Volatile;
-
+use x86_64::instructions::interrupts;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -67,7 +67,7 @@ impl Writer {
                 let col = self.column_position;
 
                 let color_code = self.color_code;
-                self.buffer.chars[row][col].write( ScreenChar {
+                self.buffer.chars[row][col].write(ScreenChar {
                     ascii_character: byte,
                     color_code,
                 });
@@ -97,8 +97,6 @@ impl Writer {
         }
     }
 
-
-
     pub fn write_string(&mut self, s: &str) {
         for byte in s.bytes() {
             match byte {
@@ -107,10 +105,8 @@ impl Writer {
                 // not part of printable ASCII range
                 _ => self.write_byte(0xfe),
             }
-
         }
     }
- 
 }
 
 use core::fmt;
@@ -147,10 +143,12 @@ macro_rules! println {
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
     use core::fmt::Write;
-    WRITER.lock().write_fmt(args).unwrap();
+    use x86_64::instructions::interrupts;
+
+    interrupts::without_interrupts(|| {
+        WRITER.lock().write_fmt(args).unwrap();
+    });
 }
-
-
 
 #[test_case]
 fn test_println_simple() {
@@ -159,9 +157,11 @@ fn test_println_simple() {
 
 #[test_case]
 fn test_println_many() {
-    for _ in 0..200 {
-        println!("test_println_many output");
-    }
+    interrupts::without_interrupts(|| {
+        for _ in 0..200 {
+            println!("test_println_many output");
+        }
+    });
 }
 
 #[test_case]
