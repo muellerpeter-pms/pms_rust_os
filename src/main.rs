@@ -5,7 +5,7 @@
 #![test_runner(pms_rust_os::test_runner)]
 
 use core::panic::PanicInfo;
-use pms_rust_os::println;
+use pms_rust_os::{hlt_loop, println};
 
 #[no_mangle] // don't mangle the name of this function
 pub extern "C" fn _start() -> ! {
@@ -16,7 +16,7 @@ pub extern "C" fn _start() -> ! {
     #[cfg(test)]
     test_main();
 
-    loop {}
+    hlt_loop();
 }
 
 /// This function is called on panic.
@@ -24,7 +24,7 @@ pub extern "C" fn _start() -> ! {
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
-    loop {}
+    hlt_loop();
 }
 
 #[cfg(test)]
