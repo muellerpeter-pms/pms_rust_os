@@ -1,6 +1,6 @@
 use bootloader::bootinfo::{MemoryMap, MemoryRegionType};
 use x86_64::{
-    structures::paging::{FrameAllocator, PhysFrame, Size4KiB},
+    structures::paging::{FrameAllocator, Page, PageTable, PhysFrame, Size2MiB, Size4KiB},
     PhysAddr,
 };
 
@@ -42,6 +42,7 @@ impl PhysicalMemoryManager {
         lastframe
     }
 
+    #[cfg(feature = "verbose")]
     fn list_memory_regions(memory_map: &MemoryMap) {
         let regions = memory_map.iter();
         // filter for usable
@@ -61,19 +62,30 @@ impl PhysicalMemoryManager {
         });
     }
 
-    fn register_pages_for_allocation_map {
+    fn register_pages_for_allocation_map(memory_map: &MemoryMap, virt_addr_offset: u64) {
         // get highest frame to map
-        let _highest_frame = Self::get_higest_physical_frame(memory_map);
+        let highest_frame = Self::get_higest_physical_frame(memory_map);
 
+        // each page can handle 0x8000 bits and therefore
+        // 0x8000000 byte of memory in 4kiB sized frames
+        const addresses_per_frame: u64 = 0x1000 * 8 * 0x1000;
+        let frames_needed = (highest_frame * 0x1000 / addresses_per_frame) + 1;
+
+        #[cfg(feature = "verbose")]
+        serial_println!(
+            "need {} pages for bitmapping physical ram with highest frame {}",
+            frames_needed,
+            highest_frame
+        );
     }
 
-    pub fn init(memory_map: &MemoryMap) -> Self {
+    pub fn init(memory_map: &MemoryMap, virt_addr_offset: u64) -> Self {
         let physical_memory_manager = Self {};
 
         #[cfg(feature = "verbose")]
         Self::list_memory_regions(memory_map);
 
-        //let iterator = Self::get_frame_iterator(map);
+        Self::register_pages_for_allocation_map(memory_map, virt_addr_offset);
 
         physical_memory_manager
     }
@@ -84,3 +96,31 @@ unsafe impl FrameAllocator<Size4KiB> for PhysicalMemoryManager {
         None
     }
 }
+
+unsafe impl FrameAllocator<Size2MiB> for PhysicalMemoryManager {
+    fn allocate_frame(&mut self) -> Option<x86_64::structures::paging::PhysFrame<Size2MiB>> {
+        None
+    }
+}
+
+/*
+4 kiB
+8 kiB
+16 kiB
+32 kiB
+64 kiB
+128 kiB
+256 kiB
+512 kiB
+1 MiB
+2 MiB
+4 MiB
+8 MiB
+16 MiB
+32 MiB
+64 MiB
+128 MiB
+256 MiB
+512 MiB
+1 GiB
+ */

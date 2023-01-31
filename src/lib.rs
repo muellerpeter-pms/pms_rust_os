@@ -23,7 +23,7 @@ pub fn init(boot_info: &'static BootInfo) {
     unsafe { interrupt::PICS.lock().initialize() }
     x86_64::instructions::interrupts::enable();
 
-    memory::init(boot_info.recursive_page_table_addr, &boot_info.memory_map);
+    memory::init(boot_info.physical_memory_offset, &boot_info.memory_map);
 }
 
 pub fn hlt_loop() -> ! {
