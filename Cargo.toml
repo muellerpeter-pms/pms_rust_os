@@ -17,6 +17,7 @@ test-args = [
 ]
 test-success-exit-code = 33
 test-timeout = 300 # (in seconds)
+run-args = ["-serial", "stdio", "-m", "128M"] # TODO: "-accel", "hax"]
 
 [[test]]
 name = "should_panic"

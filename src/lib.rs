@@ -17,13 +17,13 @@ use core::panic::PanicInfo;
 use bootloader::entry_point;
 use bootloader::BootInfo;
 
-pub fn init(_boot_info: &'static BootInfo) {
+pub fn init(boot_info: &'static BootInfo) {
     gdt::init();
     interrupt::init_idt();
     unsafe { interrupt::PICS.lock().initialize() }
     x86_64::instructions::interrupts::enable();
 
-    memory::init(_boot_info.recursive_page_table_addr);
+    memory::init(boot_info.recursive_page_table_addr, &boot_info.memory_map);
 }
 
 pub fn hlt_loop() -> ! {
