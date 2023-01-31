@@ -6,9 +6,10 @@ use x86_64::{
 #[cfg(feature = "verbose")]
 use crate::println;
 
-pub fn init(page_table_address: u64) {
+pub fn init(page_table_address: u64) -> RecursivePageTable<'static> {
     let page_table: &mut PageTable = unsafe { get_reference_to_page_table(page_table_address) };
-    let _rpt = RecursivePageTable::new(page_table);
+
+    RecursivePageTable::new(page_table).expect("Pagetable is not valid!")
 }
 
 unsafe fn get_reference_to_page_table(address: u64) -> &'static mut PageTable {
