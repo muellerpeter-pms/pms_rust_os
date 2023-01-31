@@ -37,6 +37,7 @@ fn panic(info: &PanicInfo) -> ! {
 }
 
 #[test_case]
+#[allow(clippy::eq_op)]
 fn trivial_assertion() {
     assert_eq!(1, 1);
 }

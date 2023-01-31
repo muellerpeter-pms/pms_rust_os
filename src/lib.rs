@@ -7,6 +7,7 @@
 
 pub mod gdt;
 pub mod interrupt;
+pub mod memory;
 pub mod serial;
 pub mod vga_buffer;
 
@@ -21,6 +22,7 @@ pub fn init(_boot_info: &'static BootInfo) {
     interrupt::init_idt();
     unsafe { interrupt::PICS.lock().initialize() }
     x86_64::instructions::interrupts::enable();
+    memory::init(_boot_info.recursive_page_table_addr);
 }
 
 pub fn hlt_loop() -> ! {
