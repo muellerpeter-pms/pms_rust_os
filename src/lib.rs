@@ -12,7 +12,11 @@ pub mod vga_buffer;
 
 use core::panic::PanicInfo;
 
-pub fn init() {
+#[cfg(test)]
+use bootloader::entry_point;
+use bootloader::BootInfo;
+
+pub fn init(_boot_info: &'static BootInfo) {
     gdt::init();
     interrupt::init_idt();
     unsafe { interrupt::PICS.lock().initialize() }
@@ -56,11 +60,12 @@ pub fn test_panic_handler(info: &PanicInfo) -> ! {
     hlt_loop();
 }
 
-/// Entry point for `cargo test`
 #[cfg(test)]
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
-    init();
+entry_point!(kernel_test_main);
+#[cfg(test)]
+/// Entry point for `cargo test`
+fn kernel_test_main(boot_info: &'static BootInfo) -> ! {
+    init(boot_info);
     test_main();
 
     hlt_loop();

@@ -7,11 +7,14 @@
 use core::panic::PanicInfo;
 use pms_rust_os::{hlt_loop, println};
 
-#[no_mangle] // don't mangle the name of this function
-pub extern "C" fn _start() -> ! {
+use bootloader::{entry_point, BootInfo};
+
+entry_point!(kernel_main);
+
+fn kernel_main(boot_info: &'static BootInfo) -> ! {
     println!("Hello World{}", "!");
 
-    pms_rust_os::init();
+    pms_rust_os::init(boot_info);
 
     #[cfg(test)]
     test_main();
