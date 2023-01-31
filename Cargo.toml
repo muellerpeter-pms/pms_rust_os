@@ -38,3 +38,7 @@ pc-keyboard = "0.5.0"
 [dependencies.lazy_static]
 version = "1.0"
 features = ["spin_no_std"]
+
+[features]
+default = ["verbose"]
+verbose = []
