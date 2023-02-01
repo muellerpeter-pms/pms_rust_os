@@ -1,3 +1,8 @@
+//! Handhabung der Interrupt Tabelle und entsprechende Handler
+//!
+//! Dieses Modul enthält die Handler für verschiedene Interrupts. Außerdem wird die
+//! IDT erstellt und durch die Funktion [init] geladen.
+
 use crate::gdt;
 use crate::print;
 use crate::println;
@@ -6,9 +11,12 @@ use pic8259::ChainedPics;
 use spin;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
+/// Offset for first PIC
 pub const PIC_1_OFFSET: u8 = 32;
+/// Offset for second PIC
 pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
 
+/// static for handling both PICS
 pub static PICS: spin::Mutex<ChainedPics> =
     spin::Mutex::new(unsafe { ChainedPics::new(PIC_1_OFFSET, PIC_2_OFFSET) });
 
@@ -28,6 +36,13 @@ lazy_static! {
     };
 }
 
+/// Initialisiert die Interrupt Description Table
+///
+/// Lädt die IDT mit:
+/// - breakpoint handler
+/// - double fault handler
+/// - PIC::Timer handler
+/// - PIC::Keyboard handler
 pub fn init_idt() {
     IDT.load();
 }
@@ -81,10 +96,13 @@ extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFr
     }
 }
 
+/// Interrupt Indizes für die einzelnen PIC-Interrupts
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
 pub enum InterruptIndex {
+    /// PIC-Zeitgeber -> PIC1 Adresse
     Timer = PIC_1_OFFSET,
+    /// Tastatur
     Keyboard,
 }
 

@@ -10,7 +10,7 @@ use core::panic::PanicInfo;
 pub extern "C" fn _start() -> ! {
     test_main();
 
-    loop {}
+    hlt_loop();
 }
 
 #[panic_handler]
@@ -18,7 +18,7 @@ fn panic(info: &PanicInfo) -> ! {
     pms_rust_os::test_panic_handler(info);
 }
 
-use pms_rust_os::println;
+use pms_rust_os::{hlt_loop, println};
 
 #[test_case]
 fn test_println() {

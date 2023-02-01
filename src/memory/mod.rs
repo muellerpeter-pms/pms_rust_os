@@ -1,8 +1,9 @@
+//! Handhabung des physischen und virtuellen Speichers.
+//!
+//! Das Modul enthält die Verwaltung des physischen, als auch des virtuellen Speichers.
+//! Zusätzlich ist ein Allocator für den Kernel-eigenen Heap implementiert. Todo!()
+
 use bootloader::bootinfo::MemoryMap;
-use x86_64::{
-    structures::paging::{page, PageTable, PageTableFlags, RecursivePageTable},
-    VirtAddr,
-};
 
 mod physical;
 
@@ -10,6 +11,7 @@ pub use physical::PhysicalMemoryManager;
 
 //use physical::PhysicalMemoryManager;
 
+/// Initialisiert die Speicherverwaltung
 pub fn init(virt_memory_offset: u64, map: &MemoryMap) {
     let _pmm = PhysicalMemoryManager::init(map, virt_memory_offset);
 

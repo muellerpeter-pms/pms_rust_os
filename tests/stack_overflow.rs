@@ -4,7 +4,7 @@
 
 use core::panic::PanicInfo;
 
-use pms_rust_os::serial_print;
+use pms_rust_os::{hlt_loop, serial_print};
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
@@ -54,7 +54,8 @@ extern "x86-interrupt" fn test_double_fault_handler(
 ) -> ! {
     serial_println!("[ok]");
     exit_qemu(QemuExitCode::Success);
-    loop {}
+
+    hlt_loop();
 }
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
