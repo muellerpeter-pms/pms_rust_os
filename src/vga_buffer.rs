@@ -27,35 +27,47 @@ pub enum Color {
     White = 15,
 }
 
+/// Struktur für den Farbcode aus 4 bit Vordergrund und 4 bit Hintergrund.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
 struct ColorCode(u8);
 
 impl ColorCode {
+    /// Erzeugt einen neuen Farbcode.
     fn new(foreground: Color, background: Color) -> ColorCode {
         ColorCode((background as u8) << 4 | (foreground as u8))
     }
 }
 
+/// Enthält die Informationen eines Zeichens auf dem Bildschirm.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
 struct ScreenChar {
+    /// ASCII Code des Zeichens
     ascii_character: u8,
+    /// Farbkodierung
     color_code: ColorCode,
 }
 
+/// Höhe des VGA-Text-Buffer
 const BUFFER_HEIGHT: usize = 25;
+/// Breite des VGA-Text-Buffer
 const BUFFER_WIDTH: usize = 80;
 
+/// Struktur, welche den VGA-Text-Buffer repräsentiert.
 #[repr(transparent)]
 struct Buffer {
+    /// Die einzelnen Zeichen, als Array aus [BreitexHöhe]
     chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
 }
 
 /// Schreibt auf den VGA-Buffer.
 pub struct Writer {
+    /// Position in der Spalte
     column_position: usize,
+    /// Aktueller Farbcode für das Schreiben.
     color_code: ColorCode,
+    /// der Puffer, in welchen wir schreiben.
     buffer: &'static mut Buffer,
 }
 
@@ -82,6 +94,11 @@ impl Writer {
         }
     }
 
+    /// Erzeugt eine neue Zeile im Puffer
+    ///
+    /// Dabei werden alle Zeilen jeweils eins nach oben kopiert. Die
+    /// letzte Zeile wird komplett gelöscht und die Spaltenposition
+    /// auf 0 zurück gesetzt.
     fn new_line(&mut self) {
         for row in 1..BUFFER_HEIGHT {
             for col in 0..BUFFER_WIDTH {
@@ -93,6 +110,9 @@ impl Writer {
         self.column_position = 0;
     }
 
+    /// Löscht eine Zeile, indem alle Zeichen als ' '
+    /// mit der intern gespeicherten Farkbodierung
+    /// überschrieben werden.
     fn clear_row(&mut self, row: usize) {
         let blank = ScreenChar {
             ascii_character: b' ',

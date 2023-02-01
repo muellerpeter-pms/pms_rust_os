@@ -15,7 +15,9 @@ lazy_static! {
     static ref TSS: TaskStateSegment = {
         let mut tss = TaskStateSegment::new();
         tss.interrupt_stack_table[DOUBLE_FAULT_IST_INDEX as usize] = {
+            /// Die Größe des Stacks
             const STACK_SIZE: usize = 4096 * 5;
+            /// Der Stack für den Double Fault handler
             static mut STACK: [u8; STACK_SIZE] = [0; STACK_SIZE];
 
             let stack_start = VirtAddr::from_ptr(unsafe { &STACK });
@@ -42,8 +44,11 @@ lazy_static! {
     };
 }
 
+/// Selektroen für Code-Segment und Task State Segment
 struct Selectors {
+    /// Code Segment Selector
     code_selector: SegmentSelector,
+    /// Task State Segment Selector
     tss_selector: SegmentSelector,
 }
 

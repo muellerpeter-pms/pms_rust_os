@@ -15,7 +15,8 @@
 #![feature(abi_x86_interrupt)]
 #![test_runner(crate::test_runner)]
 #![reexport_test_harness_main = "test_main"]
-#![warn(missing_docs)]
+#![deny(missing_docs)]
+#![warn(clippy::missing_docs_in_private_items)]
 
 pub mod gdt;
 pub mod interrupt;

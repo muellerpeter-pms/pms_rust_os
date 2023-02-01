@@ -47,10 +47,12 @@ pub fn init_idt() {
     IDT.load();
 }
 
+/// Handler: breakpoint
 extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {
     println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
 }
 
+/// Handler: double-fault
 extern "x86-interrupt" fn double_fault_handler(
     stack_frame: InterruptStackFrame,
     _error_code: u64,
@@ -58,6 +60,7 @@ extern "x86-interrupt" fn double_fault_handler(
     panic!("EXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);
 }
 
+/// Handler: keyboard interrupt
 extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStackFrame) {
     use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
     use spin::Mutex;
@@ -88,6 +91,7 @@ extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStac
     }
 }
 
+/// Handler: timer interrupt
 extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFrame) {
     print!(".");
     unsafe {
@@ -107,10 +111,12 @@ pub enum InterruptIndex {
 }
 
 impl InterruptIndex {
+    /// konvertiert den Index in [u8]
     fn as_u8(self) -> u8 {
         self as u8
     }
 
+    /// konvertiert den Index in [usize]
     fn as_usize(self) -> usize {
         usize::from(self.as_u8())
     }
