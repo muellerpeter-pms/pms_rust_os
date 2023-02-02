@@ -24,7 +24,10 @@ pub use physical::PhysicalMemoryManager;
 //use physical::PhysicalMemoryManager;
 
 /// Initialisiert die Speicherverwaltung
-pub fn init(_virt_memory_offset: u64, _map: &'static MemoryMap) {}
+pub fn init(virt_addr_offset: u64, memory_map: &'static MemoryMap) {
+    // Starte physische Speicherverwaltung mit den Infos vom Bootloader
+    physical::PMM.init(virt_addr_offset, memory_map);
+}
 
 /// Allgemeine Form für Mutex<T> aber im Crate erweiterbar.
 pub struct Locked<T> {

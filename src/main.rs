@@ -19,6 +19,8 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     #[cfg(test)]
     test_main();
 
+    println!("we did not crash! yeah!");
+
     hlt_loop();
 }
 
