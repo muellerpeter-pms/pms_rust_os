@@ -1,6 +1,10 @@
+//! Handhabung aller Operationen auf dem VGA-Text-Buffer
+
 use volatile::Volatile;
 use x86_64::instructions::interrupts;
 
+/// Farben im VGA-Text-Modus.
+#[allow(missing_docs)]
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
@@ -23,38 +27,52 @@ pub enum Color {
     White = 15,
 }
 
+/// Struktur für den Farbcode aus 4 bit Vordergrund und 4 bit Hintergrund.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
 struct ColorCode(u8);
 
 impl ColorCode {
+    /// Erzeugt einen neuen Farbcode.
     fn new(foreground: Color, background: Color) -> ColorCode {
         ColorCode((background as u8) << 4 | (foreground as u8))
     }
 }
 
+/// Enthält die Informationen eines Zeichens auf dem Bildschirm.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
 struct ScreenChar {
+    /// ASCII Code des Zeichens
     ascii_character: u8,
+    /// Farbkodierung
     color_code: ColorCode,
 }
 
+/// Höhe des VGA-Text-Buffer
 const BUFFER_HEIGHT: usize = 25;
+/// Breite des VGA-Text-Buffer
 const BUFFER_WIDTH: usize = 80;
 
+/// Struktur, welche den VGA-Text-Buffer repräsentiert.
 #[repr(transparent)]
 struct Buffer {
+    /// Die einzelnen Zeichen, als Array aus [BreitexHöhe]
     chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
 }
 
+/// Schreibt auf den VGA-Buffer.
 pub struct Writer {
+    /// Position in der Spalte
     column_position: usize,
+    /// Aktueller Farbcode für das Schreiben.
     color_code: ColorCode,
+    /// der Puffer, in welchen wir schreiben.
     buffer: &'static mut Buffer,
 }
 
 impl Writer {
+    /// Schreibt ein einzelnes Byte (Zeichen) in den Puffer
     pub fn write_byte(&mut self, byte: u8) {
         match byte {
             b'\n' => self.new_line(),
@@ -76,6 +94,11 @@ impl Writer {
         }
     }
 
+    /// Erzeugt eine neue Zeile im Puffer
+    ///
+    /// Dabei werden alle Zeilen jeweils eins nach oben kopiert. Die
+    /// letzte Zeile wird komplett gelöscht und die Spaltenposition
+    /// auf 0 zurück gesetzt.
     fn new_line(&mut self) {
         for row in 1..BUFFER_HEIGHT {
             for col in 0..BUFFER_WIDTH {
@@ -87,6 +110,9 @@ impl Writer {
         self.column_position = 0;
     }
 
+    /// Löscht eine Zeile, indem alle Zeichen als ' '
+    /// mit der intern gespeicherten Farkbodierung
+    /// überschrieben werden.
     fn clear_row(&mut self, row: usize) {
         let blank = ScreenChar {
             ascii_character: b' ',
@@ -97,6 +123,7 @@ impl Writer {
         }
     }
 
+    /// Schreibt eine übergebene Zeichenfolge in den Puffer.
     pub fn write_string(&mut self, s: &str) {
         for byte in s.bytes() {
             match byte {
@@ -122,6 +149,7 @@ use lazy_static::lazy_static;
 use spin::Mutex;
 
 lazy_static! {
+    /// Statische Instanz des VGA-Buffer-Objekts.
     pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
         column_position: 0,
         color_code: ColorCode::new(Color::Yellow, Color::Black),
@@ -129,11 +157,13 @@ lazy_static! {
     });
 }
 
+/// Druckt die übergebenen Zeichen auf den Bildschirm.
 #[macro_export]
 macro_rules! print {
     ($($arg:tt)*) => ($crate::vga_buffer::_print(format_args!($($arg)*)));
 }
 
+/// Druckt die übergebenen Zeichen auf den Bildschirm mit einem \n.
 #[macro_export]
 macro_rules! println {
     () => ($crate::print!("\n"));
@@ -168,7 +198,7 @@ fn test_println_output() {
 
     interrupts::without_interrupts(|| {
         let mut writer = WRITER.lock();
-        writeln!(writer, "\n{}", s).expect("writeln failed");
+        writeln!(writer, "\n{s}").expect("writeln failed");
         for (i, c) in s.chars().enumerate() {
             let screen_char = writer.buffer.chars[BUFFER_HEIGHT - 2][i].read();
             assert_eq!(char::from(screen_char.ascii_character), c);

@@ -1,3 +1,8 @@
+//! Handhabung der Interrupt Tabelle und entsprechende Handler
+//!
+//! Dieses Modul enthält die Handler für verschiedene Interrupts. Außerdem wird die
+//! IDT erstellt und durch die Funktion [init] geladen.
+
 use crate::gdt;
 use crate::print;
 use crate::println;
@@ -6,9 +11,12 @@ use pic8259::ChainedPics;
 use spin;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
+/// Offset for first PIC
 pub const PIC_1_OFFSET: u8 = 32;
+/// Offset for second PIC
 pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
 
+/// static for handling both PICS
 pub static PICS: spin::Mutex<ChainedPics> =
     spin::Mutex::new(unsafe { ChainedPics::new(PIC_1_OFFSET, PIC_2_OFFSET) });
 
@@ -28,14 +36,23 @@ lazy_static! {
     };
 }
 
+/// Initialisiert die Interrupt Description Table
+///
+/// Lädt die IDT mit:
+/// - breakpoint handler
+/// - double fault handler
+/// - PIC::Timer handler
+/// - PIC::Keyboard handler
 pub fn init_idt() {
     IDT.load();
 }
 
+/// Handler: breakpoint
 extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {
     println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
 }
 
+/// Handler: double-fault
 extern "x86-interrupt" fn double_fault_handler(
     stack_frame: InterruptStackFrame,
     _error_code: u64,
@@ -43,6 +60,7 @@ extern "x86-interrupt" fn double_fault_handler(
     panic!("EXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);
 }
 
+/// Handler: keyboard interrupt
 extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStackFrame) {
     use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
     use spin::Mutex;
@@ -73,26 +91,31 @@ extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStac
     }
 }
 
+/// Handler: timer interrupt
 extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFrame) {
-    print!(".");
     unsafe {
         PICS.lock()
             .notify_end_of_interrupt(InterruptIndex::Timer.as_u8());
     }
 }
 
+/// Interrupt Indizes für die einzelnen PIC-Interrupts
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
 pub enum InterruptIndex {
+    /// PIC-Zeitgeber -> PIC1 Adresse
     Timer = PIC_1_OFFSET,
+    /// Tastatur
     Keyboard,
 }
 
 impl InterruptIndex {
+    /// konvertiert den Index in [u8]
     fn as_u8(self) -> u8 {
         self as u8
     }
 
+    /// konvertiert den Index in [usize]
     fn as_usize(self) -> usize {
         usize::from(self.as_u8())
     }
